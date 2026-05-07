@@ -1,10 +1,7 @@
-/* ==================== GSAP ANIMATIONS ==================== */
-
-// Register GSAP Plugins
-if (typeof gsap !== 'undefined') {
+if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 
-  // Hero Title Animation
+  // Hero animations
   gsap.from('.hero h1', {
     duration: 0.8,
     opacity: 0,
@@ -19,22 +16,20 @@ if (typeof gsap !== 'undefined') {
     delay: 0.4
   });
 
-  gsap.from('.hero-buttons .btn', {
+  gsap.from('.hero-btn', {
     duration: 0.8,
     opacity: 0,
     y: 30,
-    delay: 0.6,
-    stagger: 0.1
+    delay: 0.6
   });
 
-  // Section Title Animation
+  // Section title animations
   gsap.utils.toArray('.section-title').forEach(element => {
     gsap.from(element, {
       scrollTrigger: {
         trigger: element,
         start: 'top 80%',
-        end: 'top 50%',
-        scrub: 1
+        toggleActions: 'play none none reverse'
       },
       opacity: 0,
       y: 30,
@@ -42,8 +37,8 @@ if (typeof gsap !== 'undefined') {
     });
   });
 
-  // Card Stagger Animation
-  gsap.utils.toArray('.card').forEach((card, index) => {
+  // Card animations
+  gsap.utils.toArray('.program-card').forEach((card, index) => {
     gsap.from(card, {
       scrollTrigger: {
         trigger: card,
@@ -57,8 +52,8 @@ if (typeof gsap !== 'undefined') {
     });
   });
 
-  // News Item Animation
-  gsap.utils.toArray('.news-item').forEach((item, index) => {
+  // Blog animations
+  gsap.utils.toArray('.blog-item').forEach((item, index) => {
     gsap.from(item, {
       scrollTrigger: {
         trigger: item,
@@ -72,42 +67,19 @@ if (typeof gsap !== 'undefined') {
     });
   });
 
-  // About Content Animation
-  gsap.from('.about-content', {
+  // About section animation
+  gsap.from('.about-container > *', {
     scrollTrigger: {
-      trigger: '.about-content',
+      trigger: '.about-container',
       start: 'top 80%',
       toggleActions: 'play none none reverse'
     },
     opacity: 0,
-    x: -50,
+    x: (index) => index === 0 ? -50 : 50,
     duration: 0.8
   });
 
-  gsap.from('.about-image', {
-    scrollTrigger: {
-      trigger: '.about-image',
-      start: 'top 80%',
-      toggleActions: 'play none none reverse'
-    },
-    opacity: 0,
-    x: 50,
-    duration: 0.8
-  });
-
-  // Parallax Effect
-  gsap.utils.toArray('.hero-bg').forEach(bg => {
-    gsap.to(bg, {
-      scrollTrigger: {
-        trigger: bg,
-        scrub: true
-      },
-      y: (i, target) => -innerHeight * 0.5,
-      ease: 'none'
-    });
-  });
-
-  // Stats Counter Animation on Scroll
+  // Stats counter animation with GSAP
   gsap.utils.toArray('.stat-number').forEach(stat => {
     let proxy = { value: 0 },
       target = parseFloat(stat.textContent.replace(/[^0-9]/g, '')),
@@ -127,47 +99,22 @@ if (typeof gsap !== 'undefined') {
     });
   });
 
-  // Values List Animation
-  gsap.from('.values-list li', {
+  // CTA animation
+  gsap.from('.cta', {
     scrollTrigger: {
-      trigger: '.values-list',
-      start: 'top 85%',
-      toggleActions: 'play none none reverse'
-    },
-    opacity: 0,
-    x: -30,
-    duration: 0.5,
-    stagger: 0.1
-  });
-
-  // Contact Form Animation
-  gsap.from('.contact-info', {
-    scrollTrigger: {
-      trigger: '.contact-info',
+      trigger: '.cta',
       start: 'top 80%',
       toggleActions: 'play none none reverse'
     },
     opacity: 0,
-    x: -50,
+    scale: 0.95,
     duration: 0.8
   });
 
-  gsap.from('.contact-form', {
-    scrollTrigger: {
-      trigger: '.contact-form',
-      start: 'top 80%',
-      toggleActions: 'play none none reverse'
-    },
-    opacity: 0,
-    x: 50,
-    duration: 0.8
-  });
-
-  // Smooth ScrollTrigger Refresh
   ScrollTrigger.refresh();
   window.addEventListener('load', () => {
     ScrollTrigger.refresh();
   });
 } else {
-  console.warn('GSAP not loaded. Animations disabled.');
+  console.warn('GSAP or ScrollTrigger not loaded. Animations disabled.');
 }

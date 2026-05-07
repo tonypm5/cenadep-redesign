@@ -1,5 +1,3 @@
-/* ==================== CSS RESET ==================== */
-
 *,
 *::before,
 *::after {
@@ -39,9 +37,7 @@ button {
   border: none;
 }
 
-input,
-textarea,
-select {
+input, textarea, select {
   font-family: inherit;
   font-size: inherit;
 }
@@ -56,11 +52,6 @@ ul, ol {
   list-style: none;
 }
 
-code, pre {
-  font-family: 'Courier New', monospace;
-}
-
-/* Accessibility */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -73,7 +64,6 @@ code, pre {
   border-width: 0;
 }
 
-/* Focus Visible */
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;

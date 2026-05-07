@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Découvrez nos programmes et initiatives">
+    <title>Programmes | CENADEP</title>
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</head>
+<body>
+
+<!-- ==================== NAVIGATION ==================== -->
+<nav class="navbar">
+    <a href="index.html" class="logo">
+        <span>🌱</span> CENADEP
+    </a>
+    <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="a-propos.html">À propos</a></li>
+        <li><a href="programmes.html">Programmes</a></li>
+        <li><a href="blog.html">Actualités</a></li>
+        <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</nav>
+
+<main>
+    <!-- ==================== PAGE HERO ==================== -->
+    <section class="hero" id="hero">
+        <div class="hero-bg" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1200 600%22><rect fill=%22%236BBF59%22 width=%221200%22 height=%22600%22/></svg>');"></div>
+        <div class="container">
+            <div class="hero-content">
+                <h1>Nos Programmes</h1>
+                <p>Découvrez nos initiatives pour le développement durable</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== PROGRAMMES GRID ==================== -->
+    <section class="bg-light">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Nos Axes d'Intervention</h2>
+                <p class="section-subtitle">Six domaines clés pour transformer les communautés</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+                <!-- Programme 1 -->
+                <article class="card" style="border-left: 5px solid #6BBF59;">
+                    <h3 style="color: #6BBF59; font-size: 1.3rem;">🌾 Agriculture & Sécurité Alimentaire</h3>
+                    <p style="color: #666; line-height: 1.7; margin: 1rem 0;">Nous appuyons les producteurs locaux à augmenter leur productivité grâce à des techniques agricoles durables, l'amélioration des semences et l'accès aux marchés.</p>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                        <strong style="color: #2D5016;">Activités clés:</strong>
+                        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                            <li>Formation aux techniques durables</li>
+                            <li>Distribution de semences améliorées</li>
+                            <li>Création de groupements agricoles</li>
+                            <li>Accès aux marchés et financements</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <!-- Programme 2 -->
+                <article class="card" style="border-left: 5px solid #A8D96E;">
+                    <h3 style="color: #6BBF59; font-size: 1.3rem;">💼 Développement Économique Local</h3>
+                    <p style="color: #666; line-height: 1.7; margin: 1rem 0;">Promotion de l'entrepreneuriat et création d'emplois à travers le soutien aux petites et moyennes entreprises et aux coopératives.</p>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                        <strong style="color: #2D5016;">Activités clés:</strong>
+                        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                            <li>Formation à l'entrepreneuriat</li>
+                            <li>Appui au financement des PME</li>
+                            <li>Développement de chaînes de valeur</li>
+                            <li>Renforcement des coopératives</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <!-- Programme 3 -->
+                <article class="card" style="border-left: 5px solid #2D5016;">
+                    <h3 style="color: #6BBF59; font-size: 1.3rem;">🌍 Environnement & Ressources Naturelles</h3>
+                    <p style="color: #666; line-height: 1.7; margin: 1rem 0;">Conservation et gestion durable des ressources naturelles pour assurer un environnement sain aux générations futures.</p>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                        <strong style="color: #2D5016;">Activités clés:</strong>
+                        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                            <li>Reforestation et agroforesterie</li>
+                            <li>Conservation de la biodiversité</li>
+                            <li>Gestion durable des forêts</li>
+                            <li>Sensibilisation environnementale</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <!-- Programme 4 -->
+                <article class="card" style="border-left: 5px solid #6BBF59;">
+                    <h3 style="color: #6BBF59; font-size: 1.3rem;">🗳️ Gouvernance & Participation Citoyenne</h3>
+                    <p style="color: #666; line-height: 1.7; margin: 1rem 0;">Renforcement de la gouvernance locale et promotion de la participation active des citoyens aux processus décisionnels.</p>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                        <strong style="color: #2D5016;">Activités clés:</strong>
+                        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                            <li>Renforcement des capacités locales</li>
+                            <li>Éducation civique et citoyenneté</li>
+                            <li>Suivi des politiques publiques</li>
+                            <li>Résolution des conflits</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <!-- Programme 5 -->
+                <article class="card" style="border-left: 5px solid #A8D96E;">
+                    <h3 style="color: #6BBF59; font-size: 1.3rem;">👩‍🔧 Genre & Inclusion Sociale</h3>
+                    <p style="color: #666; line-height: 1.7; margin: 1rem 0;">Promotion de l'égalité des genres et inclusion des groupes vulnérables dans le développement économique et social.</p>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                        <strong style="color: #2D5016;">Activités clés:</strong>
+                        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                            <li>Autonomisation économique des femmes</li>
+                            <li>Lutte contre les violences de genre</li>
+                            <li>Inclusion des personnes handicapées</li>
+                            <li>Droits humains et justice</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <!-- Programme 6 -->
+                <article class="card" style="border-left: 5px solid #2D5016;">
+                    <h3 style="color: #6BBF59; font-size: 1.3rem;">🏢 Renforcement Organisationnel</h3>
+                    <p style="color: #666; line-height: 1.7; margin: 1rem 0;">Soutien institutionnel aux organisations de base pour améliorer leur efficacité, gouvernance et impact.</p>
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                        <strong style="color: #2D5016;">Activités clés:</strong>
+                        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                            <li>Élaboration de plans stratégiques</li>
+                            <li>Formation de cadres dirigeants</li>
+                            <li>Systèmes de gestion performants</li>
+                            <li>Mobilisation de ressources</li>
+                        </ul>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== IMPACT SECTION ==================== -->
+    <section id="impact">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Impact de Nos Programmes</h2>
+                <p class="section-subtitle">Les résultats concrets de nos actions</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-number">50</div>
+                    <div class="stat-label">Programmes actifs</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">150K</div>
+                    <div class="stat-label">Personnes touchées</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">12</div>
+                    <div class="stat-label">Provinces couvertes</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">6.5K</div>
+                    <div class="stat-label">Bénéficiaires directs</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CTA ==================== -->
+    <section class="cta bg-primary text-center py-4">
+        <div class="container">
+            <h2 style="color: white; margin-bottom: 1.5rem;">Vous avez un projet?</h2>
+            <p style="color: white; font-size: 1.1rem; margin-bottom: 2rem;">Parlons de comment nous pouvons collaborer</p>
+            <a href="contact.html" class="btn btn-secondary">Démarrer une collaboration</a>
+        </div>
+    </section>
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>CENADEP</h4>
+                <p>Appui au développement et à la participation populaire en RDC</p>
+                <div class="social-links">
+                    <a href="#">f</a>
+                    <a href="#">𝕩</a>
+                    <a href="#">in</a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Navigation</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="a-propos.html">À propos</a></li>
+                    <li><a href="programmes.html">Programmes</a></li>
+                    <li><a href="blog.html">Actualités</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <ul class="footer-links">
+                    <li>📍 Kinshasa, RDC</li>
+                    <li>📞 +243 (0) 1 XXX XXXX</li>
+                    <li>✉️ contact@cenadeprdc.org</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Partenaires</h4>
+                <p style="font-size: 0.9rem; color: #999;">Minka | CIPIS | Enabel | SOISOC</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 CENADEP. Tous droits réservés.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/animations.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CENADEP - Appui au développement et à la participation populaire en RDC">
+    <meta name="theme-color" content="#3d2b1f">
+    <title>CENADEP - Développement & Participation Populaire en RDC</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/GSAP.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <style>
+        :root {
+            --paper: #f0e6d2;
+            --wood: #3d2b1f;
+            --accent: #c35d00;
+            --text-dark: #2c3e50;
+            --text-light: #5a6c7d;
+            --shadow: rgba(0,0,0,0.3);
+            --light-shadow: rgba(255,255,255,0.5);
+            --spacing-unit: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--wood);
+            color: var(--text-dark);
+            font-family: 'Georgia', serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ==================== NAVIGATION ==================== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--wood);
+            border-bottom: 3px solid var(--accent);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--paper);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--paper);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: var(--paper);
+            margin: 5px 0;
+            transition: all 0.3s;
+        }
+
+        /* ==================== SECTIONS PRINCIPALES ==================== */
+        main {
+            padding-top: 70px;
+        }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ==================== HERO SECTION ==================== */
+        .hero {
+            background: linear-gradient(135deg, var(--wood) 0%, #4a3428 100%);
+            padding: 4rem 2rem;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+            color: var(--paper);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            margin-bottom: 1.5rem;
+            text-shadow: 3px 3px 6px var(--shadow);
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            margin-bottom: 2rem;
+            color: #e8d9c5;
+            animation: slideInUp 0.8s ease-out 0.2s both;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: slideInUp 0.8s ease-out 0.4s both;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 7px 7px 15px var(--shadow), -7px -7px 15px var(--light-shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 10px 10px 20px var(--shadow), -10px -10px 20px var(--light-shadow);
+        }
+
+        .btn-secondary {
+            background: var(--paper);
+            color: var(--text-dark);
+            box-shadow: 7px 7px 15px var(--shadow), -7px -7px 15px var(--light-shadow);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* ==================== SECTION À PROPOS ==================== */
+        .about {
+            background: var(--paper);
+            padding: 4rem 2rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin-bottom: 3rem;
+            text-align: center;
+            color: var(--text-dark);
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .about-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .about-text h3 {
+            color: var(--accent);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .about-text p {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .mission-list {
+            list-style: none;
+        }
+
+        .mission-list li {
+            padding: 0.8rem 0 0.8rem 2rem;
+            position: relative;
+            color: var(--text-dark);
+        }
+
+        .mission-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .about-image {
+            background: linear-gradient(135deg, #e8d9c5 0%, #d4c4ac 100%);
+            border-radius: 10px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            box-shadow: 10px 10px 30px var(--shadow);
+        }
+
+        /* ==================== PROJETS/PROGRAMMES ==================== */
+        .projects {
+            background: linear-gradient(135deg, #f8f4ed 0%, var(--paper) 100%);
+            padding: 4rem 2rem;
+        }
+
+        .projects-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 8px 8px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border-left: 5px solid var(--accent);
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 15px 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .project-card h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .project-card p {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .project-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: var(--accent);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        /* ==================== ACTUALITÉS ==================== */
+        .news {
+            background: var(--paper);
+            padding: 4rem 2rem;
+        }
+
+        .news-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .news-item {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 6px 6px 15px var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .news-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 10px 10px 25px var(--shadow);
+        }
+
+        .news-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, var(--accent) 0%, #8b4513 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+        }
+
+        .news-content {
+            padding: 1.5rem;
+        }
+
+        .news-date {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .news-content h3 {
+            color: var(--text-dark);
+            margin: 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .news-content p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .read-more {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .read-more:hover {
+            color: var(--text-dark);
+        }
+
+        /* ==================== CONTACT ==================== */
+        .contact {
+            background: linear-gradient(135deg, var(--wood) 0%, #4a3428 100%);
+            padding: 4rem 2rem;
+            color: var(--paper);
+        }
+
+        .contact-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .contact-info h3 {
+            color: var(--accent);
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-item {
+            margin-bottom: 2rem;
+        }
+
+        .contact-item strong {
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-item p {
+            color: #e8d9c5;
+            margin: 0;
+        }
+
+        .contact-item a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-item a:hover {
+            color: #e8d9c5;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--paper);
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Georgia', serif;
+            background: rgba(240, 230, 210, 0.9);
+            color: var(--text-dark);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            background: var(--paper);
+            box-shadow: 0 0 0 3px var(--accent);
+        }
+
+        /* ==================== FOOTER ==================== */
+        footer {
+            background: #2a1f15;
+            color: #bbb;
+            padding: 2rem;
+            text-align: center;
+            border-top: 3px solid var(--accent);
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        .footer-links {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .footer-links a {
+            color: #bbb;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        /* ==================== ANIMATIONS ==================== */
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background: var(--wood);
+                padding: 1rem 0;
+                gap: 0;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 1rem 2rem;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .about-container {
+                grid-template-columns: 1fr;
+            }
+
+            .about-image {
+                height: 300px;
+            }
+
+            .contact-container {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 1rem;
+            }
+
+            .logo {
+                font-size: 1.4rem;
+            }
+
+            .hero {
+                padding: 2rem 1rem;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero p {
+                font-size: 0.95rem;
+            }
+
+            section {
+                min-height: auto;
+                padding: 3rem 1rem;
+            }
+
+            .projects-grid,
+            .news-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mission-list li {
+                padding: 0.6rem 0 0.6rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== NAVIGATION ==================== -->
+<nav class="navbar">
+    <a href="#home" class="logo">CENADEP</a>
+    <ul class="nav-links" id="navLinks">
+        <li><a href="#home">Accueil</a></li>
+        <li><a href="#about">Qui Sommes-Nous</a></li>
+        <li><a href="#projects">Programmes</a></li>
+        <li><a href="#news">Actualités</a></li>
+        <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</nav>
+
+<main>
+    <!-- ==================== HERO SECTION ==================== -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1>CENADEP</h1>
+            <p>Appui au développement et à la participation populaire en République Démocratique du Congo</p>
+            <div class="cta-buttons">
+                <button class="btn btn-primary" onclick="document.getElementById('projects').scrollIntoView()">
+                    Découvrir nos programmes
+                </button>
+                <button class="btn btn-secondary" onclick="document.getElementById('contact').scrollIntoView()">
+                    Nous contacter
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== À PROPOS ==================== -->
+    <section class="about" id="about">
+        <div class="about-container">
+            <div class="about-text">
+                <h2 class="section-title" style="text-align: left; margin: 0 0 2rem 0;">Qui Sommes-Nous</h2>
+                <h3>Notre Mission</h3>
+                <p>Depuis sa création, CENADEP œuvre pour le renforcement des capacités des organisations de base et des communautés en matière de gouvernance, de développement durable et de participation citoyenne.</p>
+                
+                <h3>Notre Vision</h3>
+                <p>Nous envisageons une RDC où les communautés locales sont autonomes, actrices de leur propre développement et participent activement aux processus de décision qui les concernent.</p>
+                
+                <h3>Nos Valeurs</h3>
+                <ul class="mission-list">
+                    <li>Intégrité et transparence</li>
+                    <li>Respect de la dignité humaine</li>
+                    <li>Engagement communautaire</li>
+                    <li>Durabilité et impact social</li>
+                    <li>Innovation et apprentissage continu</li>
+                </ul>
+            </div>
+            <div class="about-image">🤝</div>
+        </div>
+    </section>
+
+    <!-- ==================== PROJETS/PROGRAMMES ==================== -->
+    <section class="projects" id="projects">
+        <div class="projects-grid">
+            <div>
+                <h2 class="section-title" style="grid-column: 1 / -1;">Nos Programmes</h2>
+            </div>
+
+            <div class="project-card">
+                <h3>Gouvernance Locale</h3>
+                <p>Renforcement des capacités des autorités locales pour une gouvernance inclusive et participative axée sur les droits des citoyens.</p>
+                <div class="project-tags">
+                    <span class="tag">Gouvernance</span>
+                    <span class="tag">Local</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <h3>Développement Communautaire</h3>
+                <p>Appui aux initiatives de développement économique local et amélioration des conditions de vie dans les communautés.</p>
+                <div class="project-tags">
+                    <span class="tag">Économie</span>
+                    <span class="tag">Social</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <h3>Education Civique</h3>
+                <p>Sensibilisation et formation des citoyens aux droits humains, à la démocratie et à la participation politique responsable.</p>
+                <div class="project-tags">
+                    <span class="tag">Éducation</span>
+                    <span class="tag">Citoyenneté</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <h3>Genre et Inclusion</h3>
+                <p>Promotion de l'égalité des genres et inclusion des groupes marginalisés dans les processus de développement.</p>
+                <div class="project-tags">
+                    <span class="tag">Genre</span>
+                    <span class="tag">Inclusion</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <h3>Environnement Durable</h3>
+                <p>Projets de conservation et gestion durable des ressources naturelles pour les générations futures.</p>
+                <div class="project-tags">
+                    <span class="tag">Environnement</span>
+                    <span class="tag">Durable</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <h3>Renforcement Organisationnel</h3>
+                <p>Soutien institutionnel aux organisations communautaires pour améliorer leur efficacité et impact.</p>
+                <div class="project-tags">
+                    <span class="tag">Capacités</span>
+                    <span class="tag">Organisations</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== ACTUALITÉS ==================== -->
+    <section class="news" id="news">
+        <div class="news-container">
+            <h2 class="section-title">Nos Actualités</h2>
+            <div class="news-grid">
+                <article class="news-item">
+                    <div class="news-image">📰</div>
+                    <div class="news-content">
+                        <div class="news-date">7 mai 2026</div>
+                        <h3>Lancement du nouveau programme de gouvernance</h3>
+                        <p>CENADEP lance son programme triennal de renforcement de la gouvernance locale dans trois provinces.</p>
+                        <a href="#" class="read-more">Lire plus →</a>
+                    </div>
+                </article>
+
+                <article class="news-item">
+                    <div class="news-image">🌱</div>
+                    <div class="news-content">
+                        <div class="news-date">15 avril 2026</div>
+                        <h3>Atelier d'éducation civique avec 200 jeunes</h3>
+                        <p>Succès du premier cycle de formation en éducation civique impliquant 200 jeunes de Kinshasa.</p>
+                        <a href="#" class="read-more">Lire plus →</a>
+                    </div>
+                </article>
+
+                <article class="news-item">
+                    <div class="news-image">👩‍💼</div>
+                    <div class="news-content">
+                        <div class="news-date">28 mars 2026</div>
+                        <h3>Rencontre avec les femmes entrepreneures</h3>
+                        <p>CENADEP rencontre 50 femmes entrepreneures pour discuter d'inclusion économique et d'égalité.</p>
+                        <a href="#" class="read-more">Lire plus →</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CONTACT ==================== -->
+    <section class="contact" id="contact">
+        <div class="contact-container">
+            <div class="contact-info">
+                <h2 class="section-title" style="color: var(--paper); text-align: left; margin: 0 0 2rem 0;">Nous Contacter</h2>
+                
+                <div class="contact-item">
+                    <strong>📍 Adresse</strong>
+                    <p>Kinshasa, République Démocratique du Congo</p>
+                </div>
+
+                <div class="contact-item">
+                    <strong>📞 Téléphone</strong>
+                    <p>+243 (0) 1 XXX XXXX</p>
+                </div>
+
+                <div class="contact-item">
+                    <strong>✉️ Email</strong>
+                    <p>contact@cenadeprdc.org</p>
+                </div>
+
+                <div class="contact-item">
+                    <strong>🌐 Suivez-nous</strong>
+                    <p>
+                        <a href="#" style="margin-right: 1rem;">Facebook</a>
+                        <a href="#">Twitter</a>
+                    </p>
+                </div>
+            </div>
+
+            <form class="contact-form" id="contactForm">
+                <div class="form-group">
+                    <label for="name">Nom Complet</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Sujet</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Envoyer</button>
+            </form>
+        </div>
+    </section>
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+    <p>&copy; 2026 CENADEP. Tous droits réservés.</p>
+    <p>Appui au développement et à la participation populaire en RDC</p>
+    <div class="footer-links">
+        <a href="#about">Qui Sommes-Nous</a>
+        <a href="#projects">Programmes</a>
+        <a href="#news">Actualités</a>
+        <a href="#contact">Contact</a>
+    </div>
+</footer>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // ==================== MENU MOBILE ==================== 
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.getElementById('navLinks');
+
+    hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+    });
+
+    // Fermer le menu au clic sur un lien
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+        });
+    });
+
+    // ==================== ANIMATIONS AU SCROLL ==================== 
+    // Animation des cartes de projets
+    document.querySelectorAll('.project-card').forEach((card, index) => {
+        gsap.to(card, {
+            scrollTrigger: {
+                trigger: card,
+                start: 'top 80%',
+                toggleActions: 'play none none reverse'
+            },
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            delay: index * 0.1
+        });
+    });
+
+    // Animation des articles de news
+    document.querySelectorAll('.news-item').forEach((item, index) => {
+        gsap.to(item, {
+            scrollTrigger: {
+                trigger: item,
+                start: 'top 80%',
+                toggleActions: 'play none none reverse'
+            },
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            delay: index * 0.1
+        });
+    });
+
+    // ==================== GESTION DU FORMULAIRE ==================== 
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            subject: document.getElementById('subject').value,
+            message: document.getElementById('message').value
+        };
+
+        // Simuler l'envoi du formulaire
+        console.log('Formulaire soumis:', formData);
+        
+        // Message de confirmation
+        alert('Merci pour votre message ! Nous vous recontacterons bientôt.');
+        this.reset();
+    });
+
+    // ==================== ANIMATION AU CHARGEMENT ==================== 
+    window.addEventListener('load', () => {
+        // Animer les cartes au démarrage
+        document.querySelectorAll('.project-card').forEach((card, index) => {
+            gsap.from(card, {
+                opacity: 0,
+                y: 20,
+                duration: 0.6,
+                delay: 0.8 + index * 0.1
+            });
+        });
+
+        document.querySelectorAll('.news-item').forEach((item, index) => {
+            gsap.from(item, {
+                opacity: 0,
+                y: 20,
+                duration: 0.6,
+                delay: 0.8 + index * 0.1
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

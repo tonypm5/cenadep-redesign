@@ -1,0 +1,59 @@
+{
+  "summary": "First-iteration full E2E test of CENADEP NGO site. Backend pytest: 17/18 passed (1 failure on Stripe /api/donations/status returning 500). Frontend Playwright: 8/8 critical flows working (chatbot, home, blog list, AI summary, contact form, admin login+CMS, donation->Stripe redirect, lang toggle). AI integrations (Gemini 3 chat + summary) work and Stripe checkout creation works. Donation status polling endpoint is broken because Stripe cannot find the just-created session via the Emergent integration proxy.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/donations/status/{session_id}",
+        "issue": "Returns HTTP 500 (CheckoutError: 'No such checkout.session') for sessions that were JUST created via POST /api/donations/checkout (same proxy). Even after a 5s delay Stripe says 'No such checkout.session'. This breaks the /don/merci page polling flow. The exception is unhandled and bubbles up to a 500. Recommend: wrap stripe_checkout.get_checkout_status in try/except and (a) fall back to the local payment_transactions doc, or (b) return 202/{payment_status:'pending'} until the session is visible. Also investigate why Emergent Stripe proxy creates a session that is not retrievable by the same key.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Chatbot toggle vs Emergent badge",
+        "issue": "The 'Made with Emergent' badge in the bottom-right slightly overlaps the chatbot floating toggle button at 1440x900 viewport. Real users can still click, but the corner of the toggle is hit-tested by the badge. Consider raising chatbot z-index OR shifting it up (e.g., bottom-24) to avoid overlap on small screens.",
+        "selector": "[data-testid=\"chatbot-toggle\"]",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Donation success page (/don/merci)",
+        "issue": "Because /api/donations/status returns 500, the DonationSuccess polling page will likely show an error / never complete. Front-end UX after Stripe redirect back will be broken until backend status endpoint is fixed.",
+        "affected_selectors": ["donation-success", "/don/merci"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_cenadep_api.py",
+    "/app/test_reports/pytest/cenadep_results.xml"
+  ],
+  "action_items": [
+    "BACKEND HIGH: Fix /api/donations/status to handle Stripe 'No such checkout.session' gracefully (try/except returning {payment_status:'pending', status:'open'} when session not yet visible) — current behavior crashes /don/merci polling.",
+    "Investigate root cause: Emergent Stripe proxy creates a session that is then not retrievable via the same emergentintegrations key/proxy (req IDs differ between create and retrieve calls). Maybe webhook_url construction is wrong or proxy uses different account.",
+    "Minor: increase z-index or position offset of chatbot toggle so it doesn't visually overlap Emergent watermark."
+  ],
+  "critical_code_review_comments": [
+    "server.py donations_status has no error handling around the third-party call — any Stripe error leaks as 500. Always wrap external SDK calls in try/except in API endpoints.",
+    "All backend endpoints correctly strip Mongo _id via projection {_id:0} — good.",
+    "JWT secret hardcoded fallback removed (uses os.environ['JWT_SECRET']) — good, but server fails fast if missing which is desired.",
+    "Donation amounts are validated server-side via DONATION_PACKAGES dict, custom_amount has min 1.0 — solid.",
+    "Seed admin uses bcrypt.hashpw correctly and uses idempotent insert. Good.",
+    "Frontend: data-testid coverage across pages is very good for automated testing.",
+    "Chatbot.jsx: clicking outside or pressing Escape doesn't close window — minor UX gap."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_cenadep_api.py (new)"
+  ],
+  "success_rate": {"backend": "94.4% (17/18)", "frontend": "100% (8/8 critical flows after chatbot retry via JS click)"},
+  "test_credentials": "admin@cenadep.org / Cenadep2026! — verified working.",
+  "seed_data_creation": "Seed data (admin + 5 blog posts) is auto-created on backend startup; verified all 5 posts present.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend test file is at /app/backend/tests/test_cenadep_api.py — re-run with: pytest /app/backend/tests/test_cenadep_api.py -v. The single failure is TestDonations::test_checkout_package on the status poll. After main agent fixes /api/donations/status, only that test needs re-run. Frontend: chatbot toggle works but a force-click via Playwright at the badge-overlap area can miss; use JS click via page.evaluate or click at slight offset.",
+  "rca_of_the_issue": "Root cause for donation status 500: emergentintegrations.payments.stripe.checkout.StripeCheckout.get_checkout_status invokes stripe.checkout.Session.retrieve(session_id) which raises InvalidRequestError 'No such checkout.session'. This is raised even though POST /donations/checkout just succeeded with the same session_id. Likely the Emergent Stripe proxy routes create vs. retrieve to different Stripe accounts/keys, OR there's an eventual-consistency delay > our 5s. Reproduction: POST /api/donations/checkout {package_id:'small', origin_url:'<base>'} → get session_id → immediately GET /api/donations/status/{session_id} → 500. Mitigation in code: wrap call in try/except CheckoutError and return cached payment_transactions row with payment_status='pending'."
+}

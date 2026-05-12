@@ -1,0 +1,181 @@
+{
+  "theme": "LIGHT",
+  "archetype": "Swiss & High-Contrast (Tech SaaS Aesthetic applied to NGO)",
+  "global_rules": [
+    "Clone arcads.ai feel: Massive typography, plenty of negative space, crisp white backgrounds, scroll-driven reveals.",
+    "Bilingual support (FR/EN) architecture integrated via routing or state.",
+    "Use Lucide-react for icons.",
+    "Strict use of Tailwind CSS and custom HTML sections for marketing pages, Shadcn for forms/CMS elements.",
+    "GSAP for all complex scrollytelling. Do not use framer-motion if GSAP is doing the heavy lifting to avoid conflicts.",
+    "All interactive and key informational elements MUST include a `data-testid` attribute (kebab-case, role-based)."
+  ],
+  "colors": {
+    "background": {
+      "main": "#FFFFFF",
+      "card": "#F8F9FA",
+      "glass": "rgba(255, 255, 255, 0.7)"
+    },
+    "text": {
+      "heading": "#0A0A0A",
+      "body": "#736B63",
+      "muted": "#9CA3AF"
+    },
+    "brand": {
+      "primary": "#1A8F4D",
+      "secondary": "#F1C40F",
+      "accent": "#3498DB"
+    },
+    "ui": {
+      "border": "rgba(115, 107, 99, 0.1)",
+      "hover_bg": "rgba(26, 143, 77, 0.05)"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Montserrat, sans-serif",
+      "body": "Open Sans, sans-serif"
+    },
+    "hierarchy": {
+      "h1": "text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-none text-[#0A0A0A]",
+      "h2": "text-4xl sm:text-5xl font-bold tracking-tight text-[#0A0A0A]",
+      "h3": "text-2xl sm:text-3xl font-semibold tracking-tight text-[#0A0A0A]",
+      "body_large": "text-xl leading-relaxed text-[#736B63]",
+      "body": "text-base leading-relaxed text-[#736B63]",
+      "overline": "text-sm font-bold uppercase tracking-[0.2em] text-[#1A8F4D]"
+    }
+  },
+  "spacing": {
+    "section": "py-24 md:py-32 lg:py-40",
+    "container": "max-w-7xl mx-auto px-6 md:px-12",
+    "grid_gap": "gap-8 md:gap-12",
+    "card_padding": "p-8 md:p-12"
+  },
+  "animations_gsap": {
+    "scrollytelling_hero": "Pin the hero section on scroll. The massive typography scales down (scale: 0.8) and fades out (opacity: 0), while the background image/video wrapper scales up from a masked center to full viewport width/height. Use ScrollTrigger scrub: true.",
+    "fade_up_stagger": "Use ScrollTrigger. Elements translate Y from 40px to 0, opacity 0 to 1, with a stagger of 0.1s. Easing: 'power3.out'.",
+    "horizontal_scroll": "Pin the container. Translate X the inner flex wrapper based on scroll progress (-100% + viewport width) for the 'Programmes' cards. scrub: 1.",
+    "parallax_images": "Image wrappers have `overflow-hidden`. The inner `img` translates Y (e.g., yPercent: 20) with scrub: true to create parallax effect within its container.",
+    "stats_counter": "ScrollTrigger fires a counter from 0 to target value when the stats section enters the viewport. Easing: 'expo.out' over 2.5s. Pin the stats section briefly."
+  },
+  "pages": [
+    {
+      "name": "Accueil",
+      "path": "/",
+      "sections": [
+        {
+          "name": "Hero Scrollytelling",
+          "layout": "h-screen flex items-center justify-center relative overflow-hidden bg-white",
+          "content": "Massive Montserrat headline 'CULTIVONS LA DÉMOCRATIE'. Below it, a masked image (congo landscape). On scroll, text fades, image expands to cover screen."
+        },
+        {
+          "name": "Les 3 Piliers (Bento Grid)",
+          "layout": "Grid Tetris Mode: grid-cols-1 md:grid-cols-12 gap-8. Pillar 1 spans 8 cols, Pillars 2 & 3 span 4 cols each.",
+          "content": "Cards for Terre et Communauté, Participation, Rayonnement. Arcads.ai style: borderless, white bg, extremely subtle shadow, sharp hover transforms."
+        },
+        {
+          "name": "Impact (Counter)",
+          "layout": "py-32 bg-[#F8F9FA] flex flex-col items-center justify-center min-h-[60vh]",
+          "content": "Huge numbers (e.g., 500k+) in Green #1A8F4D. GSAP animated counter. Subtext in Open Sans text-[#736B63]."
+        },
+        {
+          "name": "Actualités / Blog",
+          "layout": "Grid 3 columns. gap-8.",
+          "content": "Latest posts. Image tops, clean typography below. Hover effects on image (scale up 1.05)."
+        }
+      ]
+    },
+    {
+      "name": "À propos",
+      "path": "/a-propos",
+      "sections": [
+        {
+          "name": "Mission & Vision",
+          "layout": "Grid 2 columns, big typographic contrast.",
+          "content": "Text heavy, high readability. Large Montserrat quotes."
+        }
+      ]
+    },
+    {
+      "name": "Programmes",
+      "path": "/programmes",
+      "sections": [
+        {
+          "name": "Horizontal Scroll Gallery",
+          "layout": "h-screen sticky-wrapper overflow-hidden bg-[#0A0A0A] text-white",
+          "content": "Dark mode section for contrast. GSAP horizontal scroll. Each program is a massive card taking up 80vw, bleeding off screen."
+        }
+      ]
+    },
+    {
+      "name": "Blog",
+      "path": "/blog",
+      "sections": [
+        {
+          "name": "Masonry List",
+          "layout": "CSS Columns or Grid Masonry max-w-7xl mx-auto py-24",
+          "content": "Blog cards varying in height, minimal text, strong imagery. Hover reveals."
+        }
+      ]
+    },
+    {
+      "name": "Faire un don",
+      "path": "/don",
+      "sections": [
+        {
+          "name": "Stripe Donation Form",
+          "layout": "max-w-2xl mx-auto py-24",
+          "content": "Clean SaaS-style form using Shadcn inputs. Pre-selected amounts ($10, $50, $100). Green Vital primary button."
+        }
+      ]
+    }
+  ],
+  "components": {
+    "nav_sticky": {
+      "style": "fixed top-0 w-full z-50 backdrop-blur-xl bg-white/80 border-b border-[#736B63]/10 transition-transform duration-300",
+      "behavior": "Hide on scroll down, reveal on scroll up using GSAP or standard React state.",
+      "elements": "Logo left, Nav links center, Translate toggle (FR/EN) and 'Faire un don' CTA right."
+    },
+    "cards_programmes": {
+      "style": "bg-white p-8 md:p-12 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-[#736B63]/5 hover:-translate-y-2 transition-all duration-500",
+      "content": "Icon/Image top, bold H3 text-[#0A0A0A], thin body text-[#736B63]. Learn more link with arrow."
+    },
+    "chatbot_gemini": {
+      "style": "fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full bg-[#1A8F4D] shadow-[0_12px_24px_rgba(26,143,77,0.3)] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform",
+      "behavior": "Click toggles a chat window powered by Gemini 3. Window has white bg, crisp borders."
+    },
+    "footer": {
+      "style": "bg-[#0A0A0A] text-white py-24 px-8 rounded-t-[3rem] mt-20",
+      "content": "Massive 'CENADEP' logo/text, coordinates in RDC, clean column layout for links."
+    }
+  },
+  "image_urls": [
+    {
+      "category": "hero_background",
+      "url": "https://images.unsplash.com/photo-1713468515390-95e9af5cb3ab?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTF8MHwxfHNlYXJjaHwzfHxjb25nbyUyMGtpbnNoYXNhJTIwbGFuZHNjYXBlfGVufDB8fHx8MTc3ODYxODcxOHww&ixlib=rb-4.1.0&q=85",
+      "description": "Congo landscape for the hero scrollytelling reveal"
+    },
+    {
+      "category": "pillar_terre",
+      "url": "https://images.unsplash.com/photo-1622182474215-e74d12074fcc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzR8MHwxfHNlYXJjaHw0fHxhZnJpY2FuJTIwY29tbXVuaXR5JTIwZmFybWluZyUyMHNtaWxpbmd8ZW58MHx8fHwxNzc4NjE4NzE4fDA&ixlib=rb-4.1.0&q=85",
+      "description": "African community farming smiling"
+    },
+    {
+      "category": "pillar_participation",
+      "url": "https://images.unsplash.com/photo-1573167627769-e201a7ddf409?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwyfHxhZnJpY2FuJTIwd29tZW4lMjBsZWFkZXJzaGlwJTIwbWVldGluZ3xlbnwwfHx8fDE3Nzg2MTg3MTh8MA&ixlib=rb-4.1.0&q=85",
+      "description": "African women leadership meeting"
+    },
+    {
+      "category": "pillar_rayonnement",
+      "url": "https://images.unsplash.com/photo-1744809482817-9a9d4fc280af?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwzfHxhZnJpY2FuJTIwc3R1ZGVudHMlMjBlZHVjYXRpb258ZW58MHx8fHwxNzc4NjE4NzE4fDA&ixlib=rb-4.1.0&q=85",
+      "description": "African students education"
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Install GSAP via yarn (`yarn add gsap`) and import ScrollTrigger.",
+    "Do not use `.tsx`, generate `.js` files as per project environment.",
+    "Implement the pages with React Router for multipage architecture.",
+    "Implement the translation feature (FR/EN) using a simple context or state, modifying static text strings.",
+    "Use Shadcn UI for the donation form and contact forms. Do not reinvent inputs.",
+    "Ensure all components have `data-testid` for robust testing."
+  ]
+}

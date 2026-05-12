@@ -343,10 +343,30 @@ async def donations_status(session_id: str, http_request: Request):
     host_url = str(http_request.base_url)
     webhook_url = f"{host_url}api/webhook/stripe"
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
-    status_obj: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+    existing = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
+
+    try:
+        status_obj: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+    except Exception as e:
+        logging.warning("Stripe status fetch failed for %s: %s", session_id, e)
+        # Fallback to local record so polling UI doesn't break
+        if existing:
+            return {
+                "session_id": session_id,
+                "payment_status": existing.get("payment_status", "pending"),
+                "status": existing.get("status", "open"),
+                "amount_total": int(float(existing.get("amount", 0)) * 100),
+                "currency": existing.get("currency", "usd"),
+            }
+        return {
+            "session_id": session_id,
+            "payment_status": "pending",
+            "status": "open",
+            "amount_total": 0,
+            "currency": "usd",
+        }
 
     # Update record if payment_status changed and not already marked paid
-    existing = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
     if existing and existing.get("payment_status") != "paid":
         await db.payment_transactions.update_one(
             {"session_id": session_id},

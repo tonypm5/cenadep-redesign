@@ -49,7 +49,7 @@ export const Chatbot = () => {
       <button
         data-testid="chatbot-toggle"
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full bg-[#1A8F4D] text-white shadow-[0_18px_40px_-12px_rgba(26,143,77,0.55)] hover:scale-110 transition-transform flex items-center justify-center"
+        className="fixed bottom-20 right-6 z-[60] w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#1A8F4D] text-white shadow-[0_18px_40px_-12px_rgba(26,143,77,0.55)] hover:scale-110 transition-transform flex items-center justify-center"
         aria-label="Chat"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}

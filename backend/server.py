@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, status
+from fastapi.responses import Response, RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -16,6 +17,9 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 )
+from email_service import send_email, base_template
+import io
+import csv
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -29,6 +33,8 @@ STRIPE_API_KEY = os.environ['STRIPE_API_KEY']
 JWT_SECRET = os.environ['JWT_SECRET']
 ADMIN_EMAIL = os.environ['ADMIN_EMAIL']
 ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
+CONTACT_INBOX = os.environ.get('CONTACT_INBOX', ADMIN_EMAIL)
+PUBLIC_SITE_URL = os.environ.get('PUBLIC_SITE_URL', '').rstrip('/')
 JWT_ALGO = "HS256"
 JWT_EXP_HOURS = 24
 
@@ -83,6 +89,20 @@ class ContactMessageIn(BaseModel):
 
 class ContactMessage(ContactMessageIn):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class NewsletterSubscribeIn(BaseModel):
+    email: EmailStr
+    lang: str = "fr"
+
+
+class NewsletterSubscriber(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: EmailStr
+    lang: str = "fr"
+    confirmed: bool = False
+    confirm_token: str = Field(default_factory=lambda: uuid.uuid4().hex)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -240,6 +260,35 @@ async def contact(payload: ContactMessageIn):
     doc = msg.model_dump()
     doc["created_at"] = doc["created_at"].isoformat()
     await db.contact_messages.insert_one(doc)
+
+    # Notify admin (best-effort)
+    body = f"""
+      <p style="color:#736B63;">Nouveau message reçu via le formulaire de contact :</p>
+      <table cellpadding="8" cellspacing="0" style="width:100%;font-size:14px;border-collapse:collapse;">
+        <tr><td style="color:#736B63;width:120px;">Nom</td><td style="color:#0A0A0A;font-weight:600;">{msg.name}</td></tr>
+        <tr><td style="color:#736B63;">Email</td><td style="color:#0A0A0A;">{msg.email}</td></tr>
+        <tr><td style="color:#736B63;">Sujet</td><td style="color:#0A0A0A;font-weight:600;">{msg.subject}</td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+      <p style="color:#0A0A0A;white-space:pre-wrap;line-height:1.6;">{msg.message}</p>
+    """
+    await send_email(
+        to=CONTACT_INBOX,
+        subject=f"[CENADEP] {msg.subject}",
+        html=base_template("Nouveau message de contact", body, "fr"),
+        reply_to=str(msg.email),
+    )
+    # Confirmation to sender
+    confirm = f"""
+      <p style="color:#0A0A0A;line-height:1.6;">Bonjour {msg.name},</p>
+      <p style="color:#0A0A0A;line-height:1.6;">Merci d'avoir contacté le CENADEP. Notre équipe vous répondra dans les meilleurs délais.</p>
+      <p style="color:#736B63;font-style:italic;line-height:1.6;">— L'équipe CENADEP</p>
+    """
+    await send_email(
+        to=str(msg.email),
+        subject="Nous avons bien reçu votre message · CENADEP",
+        html=base_template("Merci de nous avoir écrit", confirm, "fr"),
+    )
     return msg
 
 
@@ -250,6 +299,105 @@ async def list_contacts(_: str = Depends(require_admin)):
         if isinstance(it.get("created_at"), str):
             it["created_at"] = datetime.fromisoformat(it["created_at"])
     return items
+
+
+# ---------- Routes: Newsletter ----------
+@api_router.post("/newsletter/subscribe")
+async def newsletter_subscribe(payload: NewsletterSubscribeIn, http_request: Request):
+    existing = await db.newsletter_subscribers.find_one({"email": payload.email}, {"_id": 0})
+    if existing and existing.get("confirmed"):
+        return {"ok": True, "already_subscribed": True}
+
+    sub = NewsletterSubscriber(email=payload.email, lang=payload.lang)
+    doc = sub.model_dump()
+    doc["created_at"] = doc["created_at"].isoformat()
+    if existing:
+        await db.newsletter_subscribers.update_one(
+            {"email": payload.email},
+            {"$set": {"confirm_token": doc["confirm_token"], "lang": doc["lang"]}}
+        )
+        token = doc["confirm_token"]
+    else:
+        await db.newsletter_subscribers.insert_one(doc)
+        token = doc["confirm_token"]
+
+    site = PUBLIC_SITE_URL or str(http_request.base_url).rstrip('/')
+    confirm_url = f"{site}/api/newsletter/confirm/{token}"
+    is_fr = payload.lang == "fr"
+    subj = "Confirmez votre abonnement · CENADEP" if is_fr else "Confirm your subscription · CENADEP"
+    title = "Une dernière étape" if is_fr else "One last step"
+    body = (
+        f"<p style='color:#0A0A0A;line-height:1.7;'>Merci de vouloir recevoir nos lettres ! "
+        f"Cliquez ci-dessous pour confirmer votre adresse :</p>"
+        f"<p style='margin:24px 0;'><a href='{confirm_url}' style='background:#1A8F4D;color:#fff;padding:14px 28px;border-radius:999px;text-decoration:none;font-weight:600;'>Confirmer mon abonnement</a></p>"
+        f"<p style='color:#736B63;font-size:13px;'>Si le bouton ne fonctionne pas : <a href='{confirm_url}' style='color:#1A8F4D;'>{confirm_url}</a></p>"
+    ) if is_fr else (
+        f"<p style='color:#0A0A0A;line-height:1.7;'>Thanks for subscribing! "
+        f"Click below to confirm your address:</p>"
+        f"<p style='margin:24px 0;'><a href='{confirm_url}' style='background:#1A8F4D;color:#fff;padding:14px 28px;border-radius:999px;text-decoration:none;font-weight:600;'>Confirm subscription</a></p>"
+        f"<p style='color:#736B63;font-size:13px;'>If the button doesn't work: <a href='{confirm_url}' style='color:#1A8F4D;'>{confirm_url}</a></p>"
+    )
+    await send_email(to=str(payload.email), subject=subj, html=base_template(title, body, payload.lang))
+    return {"ok": True, "pending_confirmation": True}
+
+
+@api_router.get("/newsletter/confirm/{token}")
+async def newsletter_confirm(token: str):
+    sub = await db.newsletter_subscribers.find_one({"confirm_token": token}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Invalid token")
+    await db.newsletter_subscribers.update_one(
+        {"confirm_token": token},
+        {"$set": {"confirmed": True, "confirmed_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    site = PUBLIC_SITE_URL or ""
+    return RedirectResponse(url=f"{site}/?newsletter=ok") if site else {"ok": True}
+
+
+@api_router.get("/admin/newsletter/subscribers")
+async def admin_newsletter_list(_: str = Depends(require_admin)):
+    subs = await db.newsletter_subscribers.find({}, {"_id": 0}).sort("created_at", -1).to_list(5000)
+    for s in subs:
+        if isinstance(s.get("created_at"), str):
+            s["created_at"] = s["created_at"]
+    return subs
+
+
+@api_router.get("/admin/newsletter/export.csv")
+async def admin_newsletter_export(_: str = Depends(require_admin)):
+    subs = await db.newsletter_subscribers.find({}, {"_id": 0}).sort("created_at", -1).to_list(50000)
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["email", "lang", "confirmed", "created_at"])
+    for s in subs:
+        writer.writerow([s.get("email", ""), s.get("lang", ""), s.get("confirmed", False), s.get("created_at", "")])
+    return Response(
+        content=buf.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=cenadep-newsletter.csv"},
+    )
+
+
+# ---------- SEO: sitemap.xml ----------
+@api_router.get("/sitemap.xml")
+async def sitemap():
+    site = PUBLIC_SITE_URL or "https://cenadep.org"
+    static_paths = ["/", "/a-propos", "/programmes", "/blog", "/impact", "/actualites", "/contact", "/don"]
+    posts = await db.blog_posts.find({}, {"_id": 0}).to_list(1000)
+    urls = []
+    for p in static_paths:
+        urls.append(f"<url><loc>{site}{p}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>")
+    for post in posts:
+        slug = post.get("slug")
+        if slug:
+            urls.append(f"<url><loc>{site}/blog/{slug}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>")
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(urls) +
+        "\n</urlset>"
+    )
+    return Response(content=xml, media_type="application/xml")
 
 
 # ---------- Routes: Chatbot ----------
@@ -376,6 +524,31 @@ async def donations_status(session_id: str, http_request: Request):
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }}
         )
+        # Send donation receipt email exactly once on first 'paid' transition
+        if status_obj.payment_status == "paid":
+            donor_email = (existing.get("donor_email") or "").strip()
+            donor_name = (existing.get("donor_name") or "").strip() or "Donateur"
+            amount = float(existing.get("amount", 0))
+            if donor_email:
+                receipt_body = f"""
+                  <p style="color:#0A0A0A;line-height:1.7;">Bonjour {donor_name},</p>
+                  <p style="color:#0A0A0A;line-height:1.7;">
+                    Au nom de toute l'équipe du CENADEP, merci pour votre don de
+                    <strong style="color:#1A8F4D;">${amount:.2f} USD</strong>.
+                  </p>
+                  <p style="color:#0A0A0A;line-height:1.7;">
+                    Votre contribution finance directement la formation citoyenne, les observatoires
+                    budgétaires et l'accompagnement des communautés rurales en République Démocratique du Congo.
+                  </p>
+                  <p style="color:#736B63;font-size:13px;margin-top:24px;">
+                    Référence transaction : {session_id}
+                  </p>
+                """
+                await send_email(
+                    to=donor_email,
+                    subject="Merci pour votre don · CENADEP",
+                    html=base_template("Votre reçu de don", receipt_body, "fr"),
+                )
 
     return {
         "session_id": session_id,

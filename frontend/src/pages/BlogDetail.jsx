@@ -4,6 +4,9 @@ import { useLang } from "../context/LanguageContext";
 import { api } from "../lib/api";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { useFadeUp } from "../lib/gsap";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { SEO } from "../components/SEO";
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -34,6 +37,7 @@ export default function BlogDetail() {
 
   return (
     <div className="pt-32" data-testid="blog-detail-page">
+      <SEO title={title} description={lang === "fr" ? post.excerpt_fr : post.excerpt_en} image={post.image_url} path={`/blog/${slug}`} />
       <article className="container-x max-w-4xl">
         <Link to="/blog" className="inline-flex items-center gap-2 text-sm text-[#736B63] hover:text-[#1A8F4D] mb-8" data-testid="blog-back">
           <ArrowLeft className="w-4 h-4" /> {lang === "fr" ? "Tous les articles" : "All articles"}
@@ -78,8 +82,8 @@ export default function BlogDetail() {
       </div>
 
       <article className="container-x max-w-3xl mt-12 mb-24 reveal">
-        <div className="text-xl text-[#0A0A0A] leading-[1.75] whitespace-pre-line" style={{ fontFamily: "Open Sans" }}>
-          {content}
+        <div className="prose-cenadep text-xl text-[#0A0A0A] leading-[1.75]" style={{ fontFamily: "Open Sans" }}>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         </div>
       </article>
     </div>

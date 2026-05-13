@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 2 E2E test of CENADEP newsletter + SEO + markdown + admin inbox + Resend graceful no-op. Backend pytest: 30/30 passed (all iteration-1 endpoints still pass; donation status fallback verified; all newsletter flows + sitemap + contact-without-Resend all green). Frontend Playwright: 10/10 critical flows working (Helmet titles on Home + BlogDetail, footer newsletter subscribe shows Check icon after success, markdown renders to real <h2>/<strong>/<p> in BlogDetail wrapper .prose-cenadep, AdminBlog MarkdownEditor with Markdown/Preview tabs working, /admin/inbox loads with both Messages & Newsletter tabs, CSV export downloads cenadep-newsletter.csv, navigation between /admin/blog ↔ /admin/inbox works).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/admin/blog list", "issues": ["Seeded post 'trois-piliers-rebranding-2026' thumbnail appears broken (image not loading) in admin list — likely an Unsplash 403/blocked URL; cosmetic only. Other 4 seed images load correctly."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_cenadep_api.py",
+    "/app/test_reports/pytest/cenadep_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "email_service.send_email correctly performs graceful no-op when RESEND_API_KEY is empty (logs warning, returns {ok:false,error:'resend_not_configured'}, never raises) — verified that /api/contact and /api/newsletter/subscribe both still return 200 with empty key.",
+    "server.py donations_status now wraps StripeCheckout.get_checkout_status in try/except and falls back to the local payment_transactions doc (or default pending stub if no record) — fixes the iteration-1 HIGH bug; verified with synthetic unknown session_id returning 200 + pending.",
+    "Newsletter double-opt-in is well implemented: confirm_token regenerated when an unconfirmed subscriber re-subscribes; once confirmed=true, subscribe returns already_subscribed without changing the token.",
+    "GET /api/newsletter/confirm/{token} returns RedirectResponse when PUBLIC_SITE_URL is set — Playwright `allow_redirects=False` confirms 307/302. Good.",
+    "Admin CSV export uses csv.writer with exact headers `email,lang,confirmed,created_at` and correct Content-Disposition. Filename = cenadep-newsletter.csv. Verified via Playwright download.",
+    "react-helmet-async wired correctly: Home and BlogDetail render <title> server-side observable via page.title() in Playwright.",
+    "MarkdownEditor renders <h2>, <strong>, <em>, <ul><li> via react-markdown+remark-gfm into a .prose-cenadep div — confirmed in DOM during preview tab.",
+    "Minor: server.py admin_newsletter_list iterates and reassigns s['created_at'] to itself when it's a string (no-op line) — harmless but dead code, can be removed.",
+    "Minor: newsletter_subscribe uses request.base_url as fallback for PUBLIC_SITE_URL; this would route the confirm link through the internal preview proxy if env var is unset — currently env var IS set, so OK.",
+    "data-testid coverage is excellent across iteration-2 components (newsletter-form, newsletter-email, newsletter-submit, tab-messages, tab-subs, export-csv, admin-inbox-back, admin-inbox-link, post-content-fr/en)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_cenadep_api.py (added 12 new test functions for iteration 2: newsletter full lifecycle, sitemap, contact-with-empty-Resend, donations status fallback)"
+  ],
+  "success_rate": {"backend": "100% (30/30)", "frontend": "100% (10/10 critical flows)"},
+  "test_credentials": "admin@cenadep.org / Cenadep2026! — verified working.",
+  "seed_data_creation": "Backend auto-seeds admin + 5 blog posts on startup; tests created TEST_news_*@example.com newsletter subscribers (cleanup not enforced — entries remain in db.newsletter_subscribers with TEST_ prefix).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All iteration-1 + iteration-2 features are green. Backend test file at /app/backend/tests/test_cenadep_api.py has 30 tests grouped by class: TestHealth, TestBlog, TestAuth, TestAdminBlogCRUD, TestContact, TestChat, TestBlogSummary, TestDonations (with status fallback), TestNewsletter (full opt-in/confirm/list/export lifecycle, captures confirm_token from admin list and exercises confirm), TestSitemap, TestContactNoResend. Run with: pytest /app/backend/tests/test_cenadep_api.py -v. RESEND_API_KEY remains intentionally empty — emails are skipped with a warning log (verified). Donation status no longer 500s on unknown sessions (verified with synthetic id). If a future iteration sets RESEND_API_KEY, also verify newsletter confirmation email actually delivers.",
+  "rca_of_the_issue": "N/A — no issues found in iteration 2. The iteration-1 HIGH bug on /api/donations/status (Stripe 'No such checkout.session' bubbling as 500) is now fixed via try/except around stripe_checkout.get_checkout_status with fallback to db.payment_transactions or a pending stub."
+}

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "./context/LanguageContext";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
@@ -17,6 +18,7 @@ import Don from "./pages/Don";
 import DonationSuccess from "./pages/DonationSuccess";
 import AdminLogin from "./pages/AdminLogin";
 import AdminBlog from "./pages/AdminBlog";
+import AdminInbox from "./pages/AdminInbox";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -29,30 +31,33 @@ function ScrollToTop() {
 function App() {
   return (
     <div className="App">
-      <LanguageProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <Navbar />
-          <main>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/a-propos" element={<About />} />
-              <Route path="/programmes" element={<Programmes />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogDetail />} />
-              <Route path="/impact" element={<Impact />} />
-              <Route path="/actualites" element={<Actualites />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/don" element={<Don />} />
-              <Route path="/don/merci" element={<DonationSuccess />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin/blog" element={<AdminBlog />} />
-            </Routes>
-          </main>
-          <Footer />
-          <Chatbot />
-        </BrowserRouter>
-      </LanguageProvider>
+      <HelmetProvider>
+        <LanguageProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <Navbar />
+            <main>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/a-propos" element={<About />} />
+                <Route path="/programmes" element={<Programmes />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogDetail />} />
+                <Route path="/impact" element={<Impact />} />
+                <Route path="/actualites" element={<Actualites />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/don" element={<Don />} />
+                <Route path="/don/merci" element={<DonationSuccess />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin/blog" element={<AdminBlog />} />
+                <Route path="/admin/inbox" element={<AdminInbox />} />
+              </Routes>
+            </main>
+            <Footer />
+            <Chatbot />
+          </BrowserRouter>
+        </LanguageProvider>
+      </HelmetProvider>
     </div>
   );
 }

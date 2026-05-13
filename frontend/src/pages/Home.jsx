@@ -4,6 +4,7 @@ import { ArrowUpRight, Sparkles, Sprout, Users, Sun } from "lucide-react";
 import { useLang } from "../context/LanguageContext";
 import { useFadeUp, gsap, ScrollTrigger, animateCounter } from "../lib/gsap";
 import { api } from "../lib/api";
+import { SEO } from "../components/SEO";
 
 const HERO_IMG =
   "https://images.unsplash.com/photo-1713468515390-95e9af5cb3ab?crop=entropy&cs=srgb&fm=jpg&w=2200&q=85";
@@ -82,6 +83,7 @@ export default function Home() {
 
   return (
     <div data-testid="home-page">
+      <SEO />
       {/* HERO SCROLLYTELLING */}
       <section ref={heroRef} className="relative h-screen w-full overflow-hidden bg-white" data-testid="hero">
         <div ref={heroImgWrap} className="absolute inset-0 hero-mask">

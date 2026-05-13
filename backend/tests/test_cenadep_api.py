@@ -225,3 +225,118 @@ class TestDonations:
         payload = {"package_id": "doesnotexist", "origin_url": BASE_URL}
         r = http.post(f"{API}/donations/checkout", json=payload, timeout=30)
         assert r.status_code == 400
+
+    def test_status_fallback_unknown_session(self, http):
+        # Should NOT 500 even if Stripe can't find the session (fallback)
+        sid = f"cs_test_unknown_{uuid.uuid4().hex[:16]}"
+        r = http.get(f"{API}/donations/status/{sid}", timeout=30)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d.get("payment_status") in ("pending", "unpaid", "open")
+        assert d.get("status") in ("open", "pending")
+
+
+# ---------- Newsletter (iteration 2) ----------
+class TestNewsletter:
+    email = f"TEST_news_{uuid.uuid4().hex[:8]}@example.com"
+    token_holder = {}
+
+    def test_subscribe_first_time(self, http):
+        r = http.post(f"{API}/newsletter/subscribe", json={"email": self.email, "lang": "fr"}, timeout=20)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d.get("ok") is True
+        assert d.get("pending_confirmation") is True
+
+    def test_subscribe_idempotent_pending(self, http):
+        # Second call before confirm: still pending (regenerates token)
+        r = http.post(f"{API}/newsletter/subscribe", json={"email": self.email, "lang": "fr"}, timeout=20)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d.get("ok") is True
+        # Either pending_confirmation or already_subscribed depending on state
+        assert d.get("pending_confirmation") is True or d.get("already_subscribed") is True
+
+    def test_confirm_invalid_token(self, http):
+        r = http.get(f"{API}/newsletter/confirm/totally-invalid-token-xyz", timeout=20, allow_redirects=False)
+        assert r.status_code == 404
+
+    def test_admin_list_subscribers_requires_auth(self, http):
+        r = http.get(f"{API}/admin/newsletter/subscribers", timeout=15)
+        assert r.status_code in (401, 403)
+
+    def test_admin_list_subscribers(self, http, auth_headers):
+        r = http.get(f"{API}/admin/newsletter/subscribers", headers=auth_headers, timeout=20)
+        assert r.status_code == 200, r.text
+        items = r.json()
+        assert isinstance(items, list)
+        emails = [s.get("email") for s in items]
+        assert self.email in emails
+        # find our subscriber and capture the token for confirm test
+        for s in items:
+            if s.get("email") == self.email:
+                assert "_id" not in s
+                assert s.get("confirmed") is False
+                TestNewsletter.token_holder["token"] = s.get("confirm_token")
+                break
+        assert TestNewsletter.token_holder.get("token")
+
+    def test_confirm_valid_token(self, http, auth_headers):
+        token = TestNewsletter.token_holder.get("token")
+        assert token, "No token captured from previous test"
+        r = http.get(f"{API}/newsletter/confirm/{token}", timeout=20, allow_redirects=False)
+        # Either 200 ok json OR 307/302 redirect
+        assert r.status_code in (200, 302, 307), r.text
+        # Verify confirmed=True in admin list
+        r2 = http.get(f"{API}/admin/newsletter/subscribers", headers=auth_headers, timeout=20)
+        assert r2.status_code == 200
+        found = [s for s in r2.json() if s.get("email") == TestNewsletter.email]
+        assert found and found[0].get("confirmed") is True
+
+    def test_subscribe_after_confirmed(self, http):
+        # After confirmed, subsequent subscribe should return already_subscribed
+        r = http.post(f"{API}/newsletter/subscribe", json={"email": self.email, "lang": "fr"}, timeout=20)
+        assert r.status_code == 200
+        assert r.json().get("already_subscribed") is True
+
+    def test_admin_export_csv_requires_auth(self, http):
+        r = http.get(f"{API}/admin/newsletter/export.csv", timeout=15)
+        assert r.status_code in (401, 403)
+
+    def test_admin_export_csv(self, http, auth_headers):
+        r = http.get(f"{API}/admin/newsletter/export.csv", headers=auth_headers, timeout=20)
+        assert r.status_code == 200
+        assert "text/csv" in r.headers.get("content-type", "")
+        body = r.text
+        first_line = body.splitlines()[0]
+        assert first_line == "email,lang,confirmed,created_at"
+        assert self.email in body
+
+
+# ---------- Sitemap (iteration 2) ----------
+class TestSitemap:
+    def test_sitemap_xml(self, http):
+        r = http.get(f"{API}/sitemap.xml", timeout=15)
+        assert r.status_code == 200
+        assert "application/xml" in r.headers.get("content-type", "")
+        body = r.text
+        assert "<urlset" in body
+        assert "<loc>" in body
+        assert "/blog/construire-democratie-participative-rdc" in body
+        # Static paths
+        for p in ("/a-propos", "/programmes", "/blog", "/contact", "/don"):
+            assert p in body
+
+
+# ---------- Contact with empty RESEND key (iteration 2) ----------
+class TestContactNoResend:
+    def test_contact_still_200_when_resend_empty(self, http):
+        # RESEND_API_KEY is intentionally empty — endpoint must still return 200
+        r = http.post(f"{API}/contact", json={
+            "name": "TEST NoResend",
+            "email": "test_noresend@example.com",
+            "subject": "TEST graceful no-op",
+            "message": "Body",
+        }, timeout=20)
+        assert r.status_code == 200, r.text
+        assert r.json().get("email") == "test_noresend@example.com"

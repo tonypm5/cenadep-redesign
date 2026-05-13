@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { CenadepLogo, CenadepWordmark } from "./CenadepLogo";
 import { useLang } from "../context/LanguageContext";
 import { Mail, MapPin, Phone, Instagram, Linkedin, Facebook } from "lucide-react";
+import { NewsletterForm } from "./NewsletterForm";
 
 export const Footer = () => {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   return (
     <footer className="bg-[#0A0A0A] text-white rounded-t-[40px] mt-24 overflow-hidden relative grain" data-testid="footer">
       <div className="container-x py-24">
@@ -19,6 +20,11 @@ export const Footer = () => {
               Centre National d'Appui au Développement et à la Participation Populaire — ASBL,
               République Démocratique du Congo. Laïque · Apolitique · Inclusif.
             </p>
+            <div className="mt-8">
+              <p className="overline text-[#F1C40F] mb-3">{lang === "fr" ? "Newsletter" : "Newsletter"}</p>
+              <NewsletterForm />
+              <p className="mt-3 text-xs text-white/40">{lang === "fr" ? "Une lettre mensuelle, jamais de spam." : "One monthly letter, never spam."}</p>
+            </div>
             <div className="flex gap-4 mt-8">
               <a className="text-white/60 hover:text-[#1A8F4D]" href="#" data-testid="social-instagram"><Instagram className="w-5 h-5" /></a>
               <a className="text-white/60 hover:text-[#1A8F4D]" href="#" data-testid="social-facebook"><Facebook className="w-5 h-5" /></a>

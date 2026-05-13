@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import { api, auth } from "../lib/api";
 import { useLang } from "../context/LanguageContext";
 import { toast, Toaster } from "sonner";
-import { Plus, Edit2, Trash2, LogOut, X } from "lucide-react";
+import { Plus, Edit2, Trash2, LogOut, X, Inbox } from "lucide-react";
+import { MarkdownEditor } from "../components/MarkdownEditor";
 
 const empty = {
   slug: "",
@@ -81,6 +82,7 @@ export default function AdminBlog() {
             </h1>
           </div>
           <div className="flex gap-3">
+            <Link to="/admin/inbox" className="btn-ghost text-sm" data-testid="admin-inbox-link"><Inbox className="w-4 h-4" /> {lang === "fr" ? "Boîte" : "Inbox"}</Link>
             <button onClick={openCreate} className="btn-primary text-sm" data-testid="admin-new-post"><Plus className="w-4 h-4" /> {lang === "fr" ? "Nouvel article" : "New article"}</button>
             <button onClick={logout} className="btn-ghost text-sm" data-testid="admin-logout"><LogOut className="w-4 h-4" /> {lang === "fr" ? "Quitter" : "Sign out"}</button>
           </div>
@@ -120,8 +122,14 @@ export default function AdminBlog() {
                 <textarea data-testid="post-excerpt-fr" required rows={3} placeholder="Extrait FR" value={form.excerpt_fr} onChange={(e) => setForm({ ...form, excerpt_fr: e.target.value })} className="px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
                 <textarea data-testid="post-excerpt-en" required rows={3} placeholder="Excerpt EN" value={form.excerpt_en} onChange={(e) => setForm({ ...form, excerpt_en: e.target.value })} className="px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
               </div>
-              <textarea data-testid="post-content-fr" required rows={8} placeholder="Contenu FR" value={form.content_fr} onChange={(e) => setForm({ ...form, content_fr: e.target.value })} className="w-full px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
-              <textarea data-testid="post-content-en" required rows={8} placeholder="Content EN" value={form.content_en} onChange={(e) => setForm({ ...form, content_en: e.target.value })} className="w-full px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-[#736B63] mb-2">Contenu FR</p>
+                <MarkdownEditor data-testid="post-content-fr" value={form.content_fr} onChange={(v) => setForm({ ...form, content_fr: v })} placeholder="Écrivez en markdown…" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-[#736B63] mb-2">Content EN</p>
+                <MarkdownEditor data-testid="post-content-en" value={form.content_en} onChange={(v) => setForm({ ...form, content_en: v })} placeholder="Write in markdown…" />
+              </div>
             </div>
             <button type="submit" data-testid="post-save" className="btn-primary mt-6 w-full justify-center">{lang === "fr" ? "Enregistrer" : "Save"}</button>
           </form>

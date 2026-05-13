@@ -21,12 +21,42 @@ export default function Home() {
   const heroImgWrap = useRef(null);
   const heroTitle = useRef(null);
   const statRefs = useRef([]);
+  const pillarsSection = useRef(null);
+  const pillarsTrack = useRef(null);
   const [posts, setPosts] = useState([]);
 
   useFadeUp(".reveal", []);
 
   useEffect(() => {
     api.get("/blog").then((r) => setPosts(r.data.slice(0, 3))).catch(() => {});
+  }, []);
+
+  // Pillars horizontal scroll
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (!pillarsTrack.current || !pillarsSection.current) return;
+      // Only enable horizontal scroll on md+ screens
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 768px)", () => {
+        const totalWidth = pillarsTrack.current.scrollWidth - window.innerWidth;
+        if (totalWidth <= 0) return;
+        const tween = gsap.to(pillarsTrack.current, {
+          x: -totalWidth,
+          ease: "none",
+          scrollTrigger: {
+            trigger: pillarsSection.current,
+            start: "top top",
+            end: () => `+=${totalWidth}`,
+            scrub: 1,
+            pin: true,
+            invalidateOnRefresh: true,
+          },
+        });
+        return () => tween.kill();
+      });
+      return () => mm.revert();
+    }, pillarsSection);
+    return () => ctx.revert();
   }, []);
 
   // Hero scrollytelling: shrink text, expand masked image
@@ -126,39 +156,68 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PILLARS */}
-      <section className="section">
+      {/* PILLARS — horizontal scroll on md+ */}
+      <section className="pt-24 md:pt-32">
         <div className="container-x">
-          <div className="max-w-3xl mb-16 reveal">
+          <div className="max-w-3xl mb-12 reveal">
             <p className="overline">{t.home.pillarsTag}</p>
             <h2 className="mt-4 text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.95] text-[#0A0A0A]">
               {t.home.pillarsTitle}
             </h2>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        {/* Mobile : stack vertical (one per row) */}
+        <div className="md:hidden container-x space-y-6">
+          {pillars.map((p, i) => (
+            <article key={i} className="card-soft p-7" data-testid={`pillar-${i + 1}`}>
+              <div className="rounded-2xl overflow-hidden aspect-[16/10] mb-6">
+                <img src={p.img} alt={p.title} className="w-full h-full object-cover" />
+              </div>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="w-11 h-11 rounded-full flex items-center justify-center text-white" style={{ background: p.color }}>{p.icon}</span>
+                <span className="overline" style={{ color: p.color }}>Pilier {i + 1}</span>
+              </div>
+              <h3 className="text-2xl font-bold tracking-tight text-[#0A0A0A]" style={{ fontFamily: "Montserrat" }}>{p.title}</h3>
+              <p className="mt-3 text-[#736B63] leading-relaxed">{p.desc}</p>
+              <Link to="/a-propos" className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold link-underline w-fit" style={{ color: p.color }}>
+                {t.common.learnMore} <ArrowUpRight className="w-4 h-4" />
+              </Link>
+            </article>
+          ))}
+        </div>
+
+        {/* Desktop : pin + horizontal scroll */}
+        <div ref={pillarsSection} className="hidden md:block relative h-screen w-full overflow-hidden">
+          <div ref={pillarsTrack} className="absolute top-0 left-0 h-full flex items-center pl-12 lg:pl-24 will-change-transform">
             {pillars.map((p, i) => (
               <article
                 key={i}
-                className={`card-soft p-8 md:p-10 reveal ${i === 0 ? "md:col-span-7" : "md:col-span-5"} flex flex-col`}
+                className="card-soft relative h-[72vh] w-[78vw] md:w-[58vw] lg:w-[44vw] mr-10 flex-shrink-0 overflow-hidden p-0"
                 data-testid={`pillar-${i + 1}`}
               >
-                <div className="rounded-2xl overflow-hidden aspect-[16/10] mb-8">
-                  <img src={p.img} alt={p.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                <div className="relative h-[58%] overflow-hidden">
+                  <img src={p.img} alt={p.title} className="w-full h-full object-cover" />
+                  <div className="absolute top-6 left-6 flex items-center gap-2.5 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full">
+                    <span className="w-7 h-7 rounded-full flex items-center justify-center text-white" style={{ background: p.color }}>{p.icon}</span>
+                    <span className="text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: p.color }}>Pilier 0{i + 1}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="w-12 h-12 rounded-full flex items-center justify-center text-white" style={{ background: p.color }}>
-                    {p.icon}
-                  </span>
-                  <span className="overline" style={{ color: p.color }}>Pilier {i + 1}</span>
+                <div className="p-8 md:p-10 flex flex-col h-[42%]">
+                  <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-[#0A0A0A] leading-tight" style={{ fontFamily: "Montserrat" }}>{p.title}</h3>
+                  <p className="mt-4 text-[#736B63] leading-relaxed line-clamp-3">{p.desc}</p>
+                  <Link to="/a-propos" className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold w-fit link-underline" style={{ color: p.color }}>
+                    {t.common.learnMore} <ArrowUpRight className="w-4 h-4" />
+                  </Link>
                 </div>
-                <h3 className="text-3xl font-bold tracking-tight text-[#0A0A0A]" style={{ fontFamily: "Montserrat" }}>{p.title}</h3>
-                <p className="mt-4 text-[#736B63] leading-relaxed">{p.desc}</p>
-                <Link to="/a-propos" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold link-underline w-fit" style={{ color: p.color }}>
-                  {t.common.learnMore} <ArrowUpRight className="w-4 h-4" />
-                </Link>
               </article>
             ))}
+            <div className="flex-shrink-0 w-[20vw]" aria-hidden />
+          </div>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs text-[#736B63] tracking-widest uppercase font-bold flex items-center gap-2">
+            <span className="block w-8 h-px bg-[#736B63]/40" />
+            Scroll
+            <span className="block w-8 h-px bg-[#736B63]/40" />
           </div>
         </div>
       </section>

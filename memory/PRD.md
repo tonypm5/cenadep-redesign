@@ -29,10 +29,17 @@ Build a multi-page CENADEP NGO website (FR/EN bilingual) cloning the arcads.ai a
 - Markdown editor (Markdown / Preview tabs) in AdminBlog + Markdown rendering in BlogDetail via react-markdown + remark-gfm
 - AdminInbox page combining contact messages + newsletter subscribers
 
+## Done — 2026-02 (iter 3)
+- New CENADEP logo + favicon (user-provided brand asset) integrated; index.html title updated
+- Object storage image upload in admin (drag-and-drop, JPG/PNG/WebP, 6MB cap, served via `/api/files/{path}`)
+- Blog tag filter (button bar + `?tag=` URL param, `/api/blog/tags` aggregation)
+- Article scheduling (datetime-local "Publier le" field, future posts hidden from public until publish date)
+
+## Done — 2026-02 (iter 4)
+- "Trois piliers" section converted from vertical bento grid to GSAP horizontal pinned scroll on desktop (matchMedia md+), stacked vertical cards on mobile
+
 ## Backlog
-- P1: Provide real RESEND_API_KEY + verified domain to enable actual email delivery
-- P1: Drag-and-drop image upload in admin (object storage)
-- P2: Recurring donations (Stripe subscriptions)
-- P2: Tag filtering in /blog
-- P2: Article scheduling (published_at in the future)
+- P1: Provide real RESEND_API_KEY + verified sender domain to enable email delivery
+- P2: Recurring donations (deferred — requires real Stripe account + products/prices)
+- P2: Replace placeholder Unsplash hero/post images with original photography
 - P2: Multi-author roles + audit log

@@ -3,8 +3,9 @@ import { Navigate, useNavigate, Link } from "react-router-dom";
 import { api, auth } from "../lib/api";
 import { useLang } from "../context/LanguageContext";
 import { toast, Toaster } from "sonner";
-import { Plus, Edit2, Trash2, LogOut, X, Inbox } from "lucide-react";
+import { Plus, Edit2, Trash2, LogOut, X, Inbox, Calendar } from "lucide-react";
 import { MarkdownEditor } from "../components/MarkdownEditor";
+import { ImageUploader } from "../components/ImageUploader";
 
 const empty = {
   slug: "",
@@ -17,6 +18,7 @@ const empty = {
   image_url: "",
   author: "CENADEP",
   tags: [],
+  published_at: "",
 };
 
 export default function AdminBlog() {
@@ -39,14 +41,20 @@ export default function AdminBlog() {
   const openCreate = () => { setEditing(null); setForm(empty); setOpen(true); };
   const openEdit = (p) => {
     setEditing(p.slug);
-    setForm({ ...p, tags: p.tags || [] });
+    const dt = p.published_at ? new Date(p.published_at) : null;
+    const localISO = dt ? new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+    setForm({ ...p, tags: p.tags || [], published_at: localISO });
     setOpen(true);
   };
 
   const save = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...form, tags: typeof form.tags === "string" ? form.tags.split(",").map(s => s.trim()).filter(Boolean) : form.tags };
+      const payload = {
+        ...form,
+        tags: typeof form.tags === "string" ? form.tags.split(",").map(s => s.trim()).filter(Boolean) : form.tags,
+        published_at: form.published_at ? new Date(form.published_at).toISOString() : null,
+      };
       if (editing) {
         await api.put(`/admin/blog/${editing}`, payload);
         toast.success(lang === "fr" ? "Article mis à jour" : "Article updated");
@@ -112,8 +120,23 @@ export default function AdminBlog() {
             </div>
             <div className="space-y-3">
               <input data-testid="post-slug" required disabled={!!editing} placeholder="slug-de-larticle" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="w-full px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
-              <input data-testid="post-image" required placeholder="Image URL" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} className="w-full px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
-              <input data-testid="post-tags" placeholder="tags, comma, separated" value={Array.isArray(form.tags) ? form.tags.join(", ") : form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className="w-full px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-[#736B63] mb-2">Image de couverture</p>
+                <ImageUploader value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} data-testid="post-image-uploader" />
+              </div>
+              <input data-testid="post-tags" placeholder="tags, séparés, par virgules" value={Array.isArray(form.tags) ? form.tags.join(", ") : form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className="w-full px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
+              <label className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5">
+                <Calendar className="w-4 h-4 text-[#1A8F4D]" />
+                <span className="text-sm font-semibold text-[#736B63] min-w-fit">{lang === "fr" ? "Publier le" : "Publish on"}</span>
+                <input
+                  data-testid="post-published-at"
+                  type="datetime-local"
+                  value={form.published_at}
+                  onChange={(e) => setForm({ ...form, published_at: e.target.value })}
+                  className="flex-1 bg-transparent focus:outline-none text-sm"
+                />
+                <span className="text-xs text-[#736B63]">{lang === "fr" ? "(vide = maintenant)" : "(empty = now)"}</span>
+              </label>
               <div className="grid md:grid-cols-2 gap-3">
                 <input data-testid="post-title-fr" required placeholder="Titre FR" value={form.title_fr} onChange={(e) => setForm({ ...form, title_fr: e.target.value })} className="px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />
                 <input data-testid="post-title-en" required placeholder="Title EN" value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} className="px-5 py-3 rounded-2xl bg-[#F8F9FA] border border-black/5 focus:border-[#1A8F4D] focus:outline-none" />

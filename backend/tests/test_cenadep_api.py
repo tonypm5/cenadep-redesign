@@ -1,9 +1,10 @@
-"""CENADEP backend API tests - covers health, blog, auth, admin CRUD, contact, chat, donations."""
+"""CENADEP backend API tests - covers health, blog, auth, admin CRUD, contact, chat, donations, uploads, tags, scheduling."""
 import os
 import uuid
 import time
 import pytest
 import requests
+from datetime import datetime, timezone, timedelta
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://cenadep-blog-demo.preview.emergentagent.com").rstrip("/")
 API = f"{BASE_URL}/api"
@@ -340,3 +341,136 @@ class TestContactNoResend:
         }, timeout=20)
         assert r.status_code == 200, r.text
         assert r.json().get("email") == "test_noresend@example.com"
+
+
+# ---------- Iteration 3: Blog tag filter & tags aggregation ----------
+class TestBlogTagsAndFilter:
+    def test_tags_aggregation(self, http):
+        r = http.get(f"{API}/blog/tags", timeout=15)
+        assert r.status_code == 200, r.text
+        items = r.json()
+        assert isinstance(items, list)
+        assert len(items) > 0
+        # Validate shape + sorted desc by count
+        prev = None
+        tags_set = set()
+        for it in items:
+            assert "tag" in it and "count" in it
+            assert isinstance(it["count"], int) and it["count"] >= 1
+            tags_set.add(it["tag"])
+            if prev is not None:
+                assert it["count"] <= prev
+            prev = it["count"]
+        # Seed contains 'jeunesse' tag
+        assert "jeunesse" in tags_set
+
+    def test_blog_filter_by_tag(self, http):
+        r = http.get(f"{API}/blog?tag=jeunesse", timeout=15)
+        assert r.status_code == 200, r.text
+        posts = r.json()
+        assert isinstance(posts, list)
+        assert len(posts) >= 1
+        for p in posts:
+            assert "jeunesse" in p.get("tags", [])
+
+    def test_blog_filter_unknown_tag(self, http):
+        r = http.get(f"{API}/blog?tag=nonexistent-tag-xyz", timeout=15)
+        assert r.status_code == 200
+        assert r.json() == []
+
+    def test_blog_list_returns_all_without_tag(self, http):
+        r = http.get(f"{API}/blog", timeout=15)
+        assert r.status_code == 200
+        assert len(r.json()) >= 5
+
+
+# ---------- Iteration 3: Article scheduling (future published_at) ----------
+class TestArticleScheduling:
+    def test_future_post_hidden_from_public_list(self, http, auth_headers):
+        slug = f"test-future-{uuid.uuid4().hex[:8]}"
+        future_dt = "2030-01-01T00:00:00+00:00"
+        payload = {
+            "slug": slug,
+            "title_fr": "TEST Future",
+            "title_en": "TEST Future EN",
+            "excerpt_fr": "Futur",
+            "excerpt_en": "Future",
+            "content_fr": "Contenu futur",
+            "content_en": "Future content",
+            "image_url": "https://images.unsplash.com/photo-1573167627769-e201a7ddf409",
+            "author": "TEST",
+            "tags": ["test-future"],
+            "published_at": future_dt,
+        }
+        try:
+            r = http.post(f"{API}/admin/blog", json=payload, headers=auth_headers, timeout=20)
+            assert r.status_code == 200, r.text
+            created = r.json()
+            assert created["slug"] == slug
+
+            # Public list MUST NOT include this future post
+            rl = http.get(f"{API}/blog", timeout=15)
+            assert rl.status_code == 200
+            slugs = [p["slug"] for p in rl.json()]
+            assert slug not in slugs, f"Future-scheduled slug {slug} unexpectedly returned in public list"
+
+            # Filter by its tag also must not return it
+            rt = http.get(f"{API}/blog?tag=test-future", timeout=15)
+            assert rt.status_code == 200
+            assert slug not in [p["slug"] for p in rt.json()]
+
+            # Tag aggregation should also exclude it
+            rtag = http.get(f"{API}/blog/tags", timeout=15)
+            assert "test-future" not in [t["tag"] for t in rtag.json()]
+        finally:
+            # Cleanup
+            http.delete(f"{API}/admin/blog/{slug}", headers=auth_headers, timeout=15)
+
+
+# ---------- Iteration 3: Admin image upload + public file serve ----------
+class TestUploads:
+    uploaded_path = {}
+
+    def test_upload_requires_auth(self):
+        # No auth header — use plain requests (NOT the shared json-session)
+        files = {"file": ("x.jpg", b"\xff\xd8\xff\xe0fake", "image/jpeg")}
+        r = requests.post(f"{API}/admin/upload", files=files, timeout=30)
+        assert r.status_code in (401, 403)
+
+    def test_upload_rejects_bad_content_type(self, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        files = {"file": ("notes.txt", b"hello world", "text/plain")}
+        r = requests.post(f"{API}/admin/upload", files=files, headers=headers, timeout=30)
+        assert r.status_code == 400, r.text
+
+    def test_upload_jpeg_success(self, token):
+        headers = {"Authorization": f"Bearer {token}"}
+        # Read existing jpeg from public/brand
+        local = "/app/frontend/public/brand/cenadep-favicon.jpg"
+        with open(local, "rb") as fh:
+            data = fh.read()
+        files = {"file": ("favicon.jpg", data, "image/jpeg")}
+        r = requests.post(f"{API}/admin/upload", files=files, headers=headers, timeout=120)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert "path" in d and isinstance(d["path"], str) and len(d["path"]) > 5
+        assert d.get("url", "").startswith("/api/files/")
+        assert d.get("content_type") == "image/jpeg"
+        assert isinstance(d.get("size"), int) and d["size"] > 0
+        TestUploads.uploaded_path["path"] = d["path"]
+        TestUploads.uploaded_path["url"] = d["url"]
+        TestUploads.uploaded_path["size"] = d["size"]
+
+    def test_files_serve_returns_image(self, http):
+        path = TestUploads.uploaded_path.get("path")
+        if not path:
+            pytest.skip("Upload didn't succeed; skipping serve test")
+        # Use the full url with /api prefix
+        r = http.get(f"{BASE_URL}/api/files/{path}", timeout=60)
+        assert r.status_code == 200, r.text
+        assert r.headers.get("content-type", "").startswith("image/jpeg")
+        assert len(r.content) > 0
+
+    def test_files_serve_unknown_404(self, http):
+        r = http.get(f"{BASE_URL}/api/files/cenadep/uploads/does-not-exist-xyz.jpg", timeout=30)
+        assert r.status_code == 404

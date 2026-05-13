@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, status, UploadFile, File, Query
 from fastapi.responses import Response, RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
@@ -18,6 +18,7 @@ from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 )
 from email_service import send_email, base_template
+from storage_service import init_storage, put_image, get_image, ALLOWED_IMAGE_TYPES, MAX_SIZE_BYTES
 import io
 import csv
 
@@ -73,6 +74,7 @@ class BlogPostBase(BaseModel):
     image_url: str
     author: str = "CENADEP"
     tags: List[str] = []
+    published_at: Optional[datetime] = None
 
 
 class BlogPost(BlogPostBase):
@@ -182,12 +184,31 @@ async def me(email: str = Depends(require_admin)):
 
 # ---------- Routes: Blog ----------
 @api_router.get("/blog", response_model=List[BlogPost])
-async def list_posts():
-    posts = await db.blog_posts.find({}, {"_id": 0}).sort("published_at", -1).to_list(100)
+async def list_posts(tag: Optional[str] = Query(None)):
+    now_iso = datetime.now(timezone.utc).isoformat()
+    q: dict = {"published_at": {"$lte": now_iso}}
+    if tag:
+        q["tags"] = tag
+    posts = await db.blog_posts.find(q, {"_id": 0}).sort("published_at", -1).to_list(100)
     for p in posts:
         if isinstance(p.get("published_at"), str):
             p["published_at"] = datetime.fromisoformat(p["published_at"])
     return posts
+
+
+@api_router.get("/blog/tags")
+async def list_tags():
+    pipeline = [
+        {"$match": {"published_at": {"$lte": datetime.now(timezone.utc).isoformat()}}},
+        {"$unwind": "$tags"},
+        {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]
+    cur = db.blog_posts.aggregate(pipeline)
+    items = []
+    async for d in cur:
+        items.append({"tag": d["_id"], "count": d["count"]})
+    return items
 
 
 @api_router.get("/blog/{slug}", response_model=BlogPost)
@@ -205,7 +226,10 @@ async def create_post(payload: BlogPostBase, _: str = Depends(require_admin)):
     exists = await db.blog_posts.find_one({"slug": payload.slug}, {"_id": 0})
     if exists:
         raise HTTPException(status_code=400, detail="Slug already exists")
-    post = BlogPost(**payload.model_dump())
+    data = payload.model_dump()
+    if data.get("published_at") is None:
+        data["published_at"] = datetime.now(timezone.utc)
+    post = BlogPost(**data)
     doc = post.model_dump()
     doc["published_at"] = doc["published_at"].isoformat()
     await db.blog_posts.insert_one(doc)
@@ -218,6 +242,10 @@ async def update_post(slug: str, payload: BlogPostBase, _: str = Depends(require
     if not existing:
         raise HTTPException(status_code=404, detail="Post not found")
     update_data = payload.model_dump()
+    if update_data.get("published_at") is None:
+        update_data["published_at"] = existing.get("published_at")
+    elif isinstance(update_data["published_at"], datetime):
+        update_data["published_at"] = update_data["published_at"].isoformat()
     await db.blog_posts.update_one({"slug": slug}, {"$set": update_data})
     updated = await db.blog_posts.find_one({"slug": payload.slug}, {"_id": 0})
     if isinstance(updated.get("published_at"), str):
@@ -231,6 +259,54 @@ async def delete_post(slug: str, _: str = Depends(require_admin)):
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Post not found")
     return {"deleted": True}
+
+
+# ---------- Routes: Uploads (admin-only) ----------
+@api_router.post("/admin/upload")
+async def admin_upload(file: UploadFile = File(...), _: str = Depends(require_admin)):
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail=f"Unsupported content type {file.content_type}")
+    data = await file.read()
+    if len(data) > MAX_SIZE_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 6MB)")
+    ext = (file.filename or "img").rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
+    try:
+        result = put_image(data, file.content_type, ext)
+    except Exception as e:
+        logging.exception("Upload failed: %s", e)
+        raise HTTPException(status_code=500, detail="Upload failed") from e
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "storage_path": result["path"],
+        "original_filename": file.filename,
+        "content_type": file.content_type,
+        "size": result.get("size", len(data)),
+        "is_deleted": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.uploads.insert_one(record)
+
+    # Public proxy URL
+    public_url = f"/api/files/{result['path']}"
+    return {"path": result["path"], "url": public_url, "size": record["size"], "content_type": file.content_type}
+
+
+@api_router.get("/files/{path:path}")
+async def files_serve(path: str):
+    record = await db.uploads.find_one({"storage_path": path, "is_deleted": False}, {"_id": 0})
+    if not record:
+        raise HTTPException(status_code=404, detail="File not found")
+    try:
+        data, content_type = get_image(path)
+    except Exception as e:
+        logging.exception("File fetch failed: %s", e)
+        raise HTTPException(status_code=404, detail="File not available") from e
+    return Response(
+        content=data,
+        media_type=record.get("content_type", content_type),
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @api_router.get("/blog/{slug}/summary")
@@ -643,6 +719,11 @@ SEED_POSTS = [
 
 @app.on_event("startup")
 async def startup_seed():
+    # Init object storage (best-effort)
+    try:
+        init_storage()
+    except Exception as e:
+        logging.warning("Storage init at startup failed: %s", e)
     # Seed admin
     admin = await db.admins.find_one({"email": ADMIN_EMAIL}, {"_id": 0})
     if not admin:
